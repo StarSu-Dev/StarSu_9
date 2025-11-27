@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const DATA_DIR = path.join(__dirname, "Data");
-const OUTPUT = path.join(__dirname, "tree.js");
+const OUTPUT = path.join(__dirname, "content.js");
 
 function scanDir(dir) {
     const items = fs.readdirSync(dir, { withFileTypes: true });
@@ -18,12 +18,12 @@ function scanDir(dir) {
         }
 
         if (entry.isFile() && entry.name.endsWith(".md")) {
-            // Используем относительные пути без кодирования
-            const relativePath = path.relative(__dirname, full).replace(/\\/g, "/");
+            // Читаем содержимое файла и встраиваем его
+            const content = fs.readFileSync(full, 'utf8');
             return {
                 type: "file",
                 name: entry.name.replace(".md", ""),
-                path: relativePath
+                content: content
             };
         }
 
@@ -33,8 +33,9 @@ function scanDir(dir) {
 
 const tree = scanDir(DATA_DIR);
 
-const output = `export const CONTENT_TREE = ${JSON.stringify(tree, null, 2)};`;
+const output = `// Автоматически сгенерированный файл с содержимым Markdown
+export const CONTENT_TREE = ${JSON.stringify(tree, null, 2)};`;
 
 fs.writeFileSync(OUTPUT, output, "utf8");
 
-console.log("✔ tree.js создан");
+console.log("✔ content.js создан с встроенным содержимым файлов");

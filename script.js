@@ -1,4 +1,4 @@
-import { CONTENT_TREE } from "./tree.js";
+import { CONTENT_TREE } from "./content.js";
 
 const md = window.markdownit({ html: true });
 
@@ -7,15 +7,6 @@ const cards = document.getElementById("cards");
 const content = document.getElementById("content");
 
 let currentFolder = null;
-
-// Функция для исправления путей на GitHub Pages
-function fixPathForGitHub(path) {
-    // Убираем начальный слеш если есть
-    let fixedPath = path.replace(/^\//, '');
-    // Кодируем только кириллические символы
-    fixedPath = fixedPath.replace(/[^A-Za-z0-9/._-]/g, encodeURIComponent);
-    return fixedPath;
-}
 
 // === САЙДБАР ===
 function renderSidebar() {
@@ -32,7 +23,7 @@ function renderSidebar() {
             const div = document.createElement("div");
             div.className = "file";
             div.textContent = item.name;
-            div.onclick = () => loadFile(item.path);
+            div.onclick = () => loadFileContent(item);
             sidebar.appendChild(div);
         }
     });
@@ -44,6 +35,7 @@ function showCards(folder) {
     cards.innerHTML = "";
     content.innerHTML = "";
 
+    // Рекурсивно собираем все файлы из папки и подпапок
     function collectFiles(item) {
         if (item.type === "file") {
             return [item];
@@ -59,50 +51,50 @@ function showCards(folder) {
         const card = document.createElement("div");
         card.className = "card";
         
+        // Создаем превью из первых 100 символов содержимого
+        const preview = file.content 
+            ? file.content.substring(0, 100).replace(/[#*`]/g, '') + '...'
+            : 'Нажмите для просмотра';
+        
         card.innerHTML = `
             <div class="card-title">${file.name}</div>
-            <div class="card-preview">Нажмите для просмотра</div>
+            <div class="card-preview">${preview}</div>
         `;
         
-        card.onclick = () => loadFile(file.path);
+        card.onclick = () => loadFileContent(file);
         cards.appendChild(card);
     });
 
+    // Показываем карточки, скрываем контент
     cards.style.display = "flex";
     content.style.display = "none";
 }
 
-// === Загрузка Markdown ===
-async function loadFile(filePath) {
-    try {
-        cards.style.display = "none";
-        content.style.display = "block";
-        content.innerHTML = "<div class='loading'>Загрузка...</div>";
-        
-        // Исправляем путь для GitHub Pages
-        const correctedPath = fixPathForGitHub(filePath);
-        console.log('Пробуем загрузить:', correctedPath);
-        
-        const res = await fetch(correctedPath);
-        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        
-        const text = await res.text();
-        content.innerHTML = `
-            <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
-            <div class="markdown-content">${md.render(text)}</div>
-        `;
-        
-    } catch (error) {
-        console.error('Ошибка загрузки файла:', error);
+// === Загрузка содержимого Markdown (из встроенных данных) ===
+function loadFileContent(file) {
+    // Скрываем карточки, показываем контент
+    cards.style.display = "none";
+    content.style.display = "block";
+    
+    if (!file.content) {
         content.innerHTML = `
             <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
             <div class="error-message">
-                <h3>Файл не найден</h3>
-                <p>Путь: ${filePath}</p>
-                <p>Убедитесь, что файл существует в репозитории GitHub</p>
+                <h3>Содержимое недоступно</h3>
+                <p>Для файла "${file.name}" нет содержимого</p>
             </div>
         `;
+        return;
     }
+    
+    const htmlContent = md.render(file.content);
+    content.innerHTML = `
+        <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
+        <div class="markdown-content">
+            <h1>${file.name}</h1>
+            ${htmlContent}
+        </div>
+    `;
 }
 
 // === Назад к карточкам ===
@@ -110,6 +102,7 @@ function backToCards() {
     if (currentFolder) {
         showCards(currentFolder);
     } else {
+        // Если нет текущей папки, показываем приветствие
         cards.style.display = "flex";
         content.style.display = "none";
         cards.innerHTML = `
@@ -123,5 +116,7 @@ function backToCards() {
 
 // Инициализация
 renderSidebar();
+
+// Делаем функции глобальными для использования в onclick
 window.backToCards = backToCards;
 window.currentFolder = currentFolder;
