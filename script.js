@@ -36,16 +36,11 @@ function showCards(folder) {
     content.innerHTML = "";
 
     // Рекурсивно собираем все файлы из папки и подпапок
-    function collectFiles(item, path = "") {
+    function collectFiles(item) {
         if (item.type === "file") {
-            return [{
-                ...item,
-                displayName: path + item.name
-            }];
+            return [item];
         } else if (item.type === "folder" && item.children) {
-            return item.children.flatMap(child => 
-                collectFiles(child, path + item.name + " → ")
-            );
+            return item.children.flatMap(child => collectFiles(child));
         }
         return [];
     }
@@ -57,8 +52,8 @@ function showCards(folder) {
         card.className = "card";
         
         card.innerHTML = `
-            <div class="card-title">${file.displayName || file.name}</div>
-            <div class="card-preview"></div>
+            <div class="card-title">${file.name}</div>
+            <div class="card-preview">Нажмите для просмотра</div>
         `;
         
         card.onclick = () => loadFile(file.path);

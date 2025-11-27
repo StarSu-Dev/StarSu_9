@@ -30,11 +30,6 @@ export const CONTENT_TREE = [
       },
       {
         "type": "file",
-        "name": "Бестиарий",
-        "path": "\\Data\\Бестиарий\\Бестиарий.md"
-      },
-      {
-        "type": "file",
         "name": "Бриварт",
         "path": "\\Data\\Бестиарий\\Бриварт.md"
       },
@@ -311,11 +306,6 @@ export const CONTENT_TREE = [
       },
       {
         "type": "file",
-        "name": "Ведение игры",
-        "path": "\\Data\\Ведение игры\\Ведение игры.md"
-      },
-      {
-        "type": "file",
         "name": "Ловушки",
         "path": "\\Data\\Ведение игры\\Ловушки.md"
       },
@@ -512,11 +502,6 @@ export const CONTENT_TREE = [
     "children": [
       {
         "type": "file",
-        "name": "Звездолёты",
-        "path": "\\Data\\Звездолёты\\Звездолёты.md"
-      },
-      {
-        "type": "file",
         "name": "Космические путешествия",
         "path": "\\Data\\Звездолёты\\Космические путешествия.md"
       },
@@ -541,16 +526,6 @@ export const CONTENT_TREE = [
     "type": "folder",
     "name": "Классы",
     "children": [
-      {
-        "type": "file",
-        "name": "Вангард",
-        "path": "\\Data\\Классы\\Вангард.md"
-      },
-      {
-        "type": "file",
-        "name": "Классы",
-        "path": "\\Data\\Классы\\Классы.md"
-      },
       {
         "type": "file",
         "name": "Механик",
@@ -858,11 +833,6 @@ export const CONTENT_TREE = [
         ]
       },
       {
-        "type": "file",
-        "name": "Миры игры",
-        "path": "\\Data\\Миры игры\\Миры игры.md"
-      },
-      {
         "type": "folder",
         "name": "Миры Соглашения",
         "children": [
@@ -1063,11 +1033,6 @@ export const CONTENT_TREE = [
     "children": [
       {
         "type": "file",
-        "name": "Наследие Pathfinder",
-        "path": "\\Data\\Наследие Pathfinder\\Наследие Pathfinder.md"
-      },
-      {
-        "type": "file",
         "name": "Правила переноса",
         "path": "\\Data\\Наследие Pathfinder\\Правила переноса.md"
       }
@@ -1254,11 +1219,6 @@ export const CONTENT_TREE = [
             "path": "\\Data\\Расы\\Расы Enhanced\\Кицунэ.md"
           }
         ]
-      },
-      {
-        "type": "file",
-        "name": "Расы",
-        "path": "\\Data\\Расы\\Расы.md"
       }
     ]
   },
@@ -1341,11 +1301,6 @@ export const CONTENT_TREE = [
         "type": "file",
         "name": "Повышение в уровне",
         "path": "\\Data\\Создание  персонажей\\Повышение в уровне.md"
-      },
-      {
-        "type": "file",
-        "name": "Создание персонажей",
-        "path": "\\Data\\Создание  персонажей\\Создание персонажей.md"
       },
       {
         "type": "file",
@@ -1473,11 +1428,6 @@ export const CONTENT_TREE = [
         "type": "file",
         "name": "Священник",
         "path": "\\Data\\Темы\\Священник.md"
-      },
-      {
-        "type": "file",
-        "name": "Темы",
-        "path": "\\Data\\Темы\\Темы.md"
       },
       {
         "type": "file",
