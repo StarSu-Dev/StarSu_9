@@ -8,7 +8,6 @@
 html, body {
     height: 100%;
     overflow-x: hidden;
-    /* УБРАТЬ overflow-y: hidden - чтобы страница прокручивалась */
 }
 
 body {
@@ -27,7 +26,7 @@ body {
     top: 20px;
     right: 20px;
     z-index: 1000;
-    background: #238636;
+    background: #00000025;
     border: none;
     border-radius: 6px;
     width: 44px;
@@ -41,7 +40,7 @@ body {
 }
 
 .hamburger:hover {
-    background: #2ea043;
+    background: #00001000;
 }
 
 .hamburger span {
@@ -80,12 +79,12 @@ body {
     display: block;
 }
 
-/* Сайдбар - ОСТАВИТЬ прокрутку для десктопа */
+/* Сайдбар */
 #sidebar {
     width: 300px;
     padding: 20px;
     background: #0a0e12;
-    overflow-y: auto; /* ОСТАВИТЬ auto для прокрутки */
+    overflow-y: auto;
     border-right: 1px solid #30363d;
     transition: transform 0.3s ease;
 }
@@ -131,7 +130,7 @@ body {
     flex-wrap: wrap;
     align-content: flex-start;
     background: #0d1117;
-    overflow-y: auto; /* ОСТАВИТЬ auto для прокрутки */
+    overflow-y: auto;
 }
 
 .welcome-message {
@@ -188,7 +187,7 @@ body {
 
 /* Стили для разных типов карточек */
 .folder-card {
-    border-left: 4px solid #238636;
+    border-left: 4px solid #00000025;
 }
 
 .file-card {
@@ -222,27 +221,26 @@ body {
     flex: 1;
     padding: 0;
     background: #0d1117;
-    overflow-y: auto; /* ОСТАВИТЬ auto для прокрутки */
+    overflow-y: auto;
     display: none;
 }
 
 .back-button {
-    background: #238636;
+    background: #00000025;
     color: white;
     border: none;
     padding: 12px 20px;
     border-radius: 6px;
     cursor: pointer;
-    margin: 20px;
+    margin: 40px auto;
     font-size: 1em;
     transition: background 0.2s ease;
-    position: sticky;
-    top: 10px;
-    z-index: 100;
+    display: block;
+    width: fit-content;
 }
 
 .back-button:hover {
-    background: #2ea043;
+    background: #002453;
 }
 
 .markdown-content {
@@ -375,8 +373,8 @@ body {
         border-right: none;
         transition: left 0.3s ease;
         padding-top: 80px;
-        overflow-y: auto; /* ОСТАВИТЬ auto - сайдбар должен листаться! */
-        -webkit-overflow-scrolling: touch; /* Плавная прокрутка на iOS */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
     
     #sidebar.active {
@@ -391,20 +389,16 @@ body {
     #cards {
         padding: 80px 15px 15px 15px;
         gap: 15px;
-        overflow-y: auto; /* ОСТАВИТЬ auto для прокрутки карточек */
     }
     
     .markdown-content {
         padding: 80px 15px 15px 15px;
-        overflow-y: auto; /* Добавить для прокрутки контента */
     }
     
     .back-button {
-        margin: 15px;
-        position: fixed;
-        top: 80px;
-        left: 15px;
-        z-index: 100;
+        margin: 30px auto;
+        padding: 15px 25px;
+        font-size: 1.1em;
     }
     
     /* Убираем ховер эффекты на тач устройствах */
@@ -442,7 +436,6 @@ body {
     #sidebar {
         height: 100vh;
         height: 100dvh;
-        overflow-y: auto; /* УБЕДИТЬСЯ что auto */
     }
     
     .hamburger {
@@ -459,18 +452,14 @@ body {
     
     #cards {
         padding: 85px 10px 10px 10px;
-        overflow-y: auto; /* УБЕДИТЬСЯ что auto */
     }
     
     .markdown-content {
         padding: 85px 10px 10px 10px;
-        overflow-y: auto; /* УБЕДИТЬСЯ что auto */
     }
     
     .back-button {
-        margin: 10px;
-        left: 10px;
-        top: 85px;
+        margin: 25px auto;
         padding: 15px 25px;
         font-size: 1.1em;
     }
@@ -510,6 +499,5 @@ body {
 @supports (-webkit-touch-callout: none) {
     #sidebar {
         height: -webkit-fill-available;
-        overflow-y: auto; /* УБЕДИТЬСЯ что auto для iOS */
     }
 }

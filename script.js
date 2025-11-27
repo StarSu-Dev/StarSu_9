@@ -164,21 +164,21 @@ async function loadFileContent(file) {
         const htmlContent = md.render(text);
         
         content.innerHTML = `
-            <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
             <div class="markdown-content">
                 <h1>${file.name}</h1>
                 ${htmlContent}
+                <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
             </div>
         `;
         
     } catch (error) {
         console.error('Ошибка загрузки файла:', error);
         content.innerHTML = `
-            <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
             <div class="error-message">
                 <h3>Ошибка загрузки</h3>
                 <p>Не удалось загрузить: ${file.name}</p>
                 <p>Ошибка: ${error.message}</p>
+                <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
             </div>
         `;
     }
