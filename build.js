@@ -1,4 +1,3 @@
-// build.js
 const fs = require('fs');
 const path = require('path');
 
@@ -19,10 +18,12 @@ function scanDir(dir) {
         }
 
         if (entry.isFile() && entry.name.endsWith(".md")) {
+            // Используем относительные пути без кодирования
+            const relativePath = path.relative(__dirname, full).replace(/\\/g, "/");
             return {
                 type: "file",
                 name: entry.name.replace(".md", ""),
-                path: full.replace(__dirname, "")
+                path: relativePath
             };
         }
 

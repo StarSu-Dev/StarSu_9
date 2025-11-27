@@ -66,7 +66,7 @@ function showCards(folder) {
 }
 
 // === Загрузка Markdown (карточки исчезают) ===
-async function loadFile(path) {
+async function loadFile(filePath) {
     try {
         // Скрываем карточки, показываем контент
         cards.style.display = "none";
@@ -75,10 +75,36 @@ async function loadFile(path) {
         // Показываем загрузку
         content.innerHTML = "<div class='loading'>Загрузка...</div>";
         
-        const res = await fetch(path);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        // Пробуем разные варианты путей для GitHub Pages
+        const pathsToTry = [
+            filePath,
+            `./${filePath}`,
+            filePath.replace(/^Data\//, ''),
+            encodeURI(filePath),
+            encodeURI(`./${filePath}`)
+        ];
+
+        let response;
+        let successfulPath = '';
+
+        for (const path of pathsToTry) {
+            try {
+                response = await fetch(path);
+                if (response.ok) {
+                    successfulPath = path;
+                    break;
+                }
+            } catch (e) {
+                console.log(`Путь не сработал: ${path}`, e);
+                continue;
+            }
+        }
+
+        if (!response || !response.ok) {
+            throw new Error(`Не удалось загрузить файл по любому из путей`);
+        }
         
-        const text = await res.text();
+        const text = await response.text();
         content.innerHTML = `
             <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
             <div class="markdown-content">${md.render(text)}</div>
@@ -90,8 +116,14 @@ async function loadFile(path) {
             <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
             <div class="error-message">
                 <h3>Ошибка загрузки</h3>
-                <p>Не удалось загрузить файл: ${path}</p>
-                <p>${error.message}</p>
+                <p>Файл не найден: ${filePath}</p>
+                <p>Проверьте:</p>
+                <ul>
+                    <li>Файл существует в репозитории</li>
+                    <li>Путь к файлу правильный</li>
+                    <li>Файл имеет расширение .md</li>
+                </ul>
+                <p>Ошибка: ${error.message}</p>
             </div>
         `;
     }
