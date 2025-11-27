@@ -1,179 +1,145 @@
-import { CONTENT_TREE } from "./content.js";
+import { C as CONTENT_TREE } from "./content.js";
 
 const md = window.markdownit({ html: true });
+const s = document.getElementById("sidebar");
+const c = document.getElementById("cards");
+const ct = document.getElementById("content");
 
-const sidebar = document.getElementById("sidebar");
-const cards = document.getElementById("cards");
-const content = document.getElementById("content");
+let cf = null; // currentFolder
+let fs = []; // folderStack
 
-let currentFolder = null;
-let folderStack = []; // Стек для навигации по папкам
+// Кэш для отрендеренного markdown
+const renderCache = new Map();
 
-// === САЙДБАР ===
 function renderSidebar() {
-    sidebar.innerHTML = "";
+    s.innerHTML = "";
     
     CONTENT_TREE.forEach(item => {
-        if (item.type === "folder") {
-            const div = document.createElement("div");
+        const div = document.createElement("div");
+        if (item.t === "f") { // folder
             div.className = "folder";
-            div.textContent = item.name;
+            div.textContent = item.n;
             div.onclick = () => showFolderContent(item);
-            sidebar.appendChild(div);
-        } else if (item.type === "file") {
-            const div = document.createElement("div");
+        } else if (item.t === "d") { // document
             div.className = "file";
-            div.textContent = item.name;
+            div.textContent = item.n;
             div.onclick = () => loadFileContent(item);
-            sidebar.appendChild(div);
         }
+        s.appendChild(div);
     });
 }
 
-// === Показать содержимое папки в карточках ===
 function showFolderContent(folder) {
-    currentFolder = folder;
-    folderStack.push(folder);
+    cf = folder;
+    fs.push(folder);
     renderCards(folder);
 }
 
-// === Рендер карточек ===
 function renderCards(folder) {
-    cards.innerHTML = "";
-    content.innerHTML = "";
+    c.innerHTML = "";
+    ct.innerHTML = "";
 
-    if (!folder.children || folder.children.length === 0) {
-        cards.innerHTML = `
-            <div class="empty-folder">
-                <h3>${folder.name}</h3>
-                <p>Папка пуста</p>
-            </div>
-        `;
+    if (!folder.c || folder.c.length === 0) {
+        c.innerHTML = `<div class="empty-folder"><h3>${folder.n}</h3><p>Папка пуста</p></div>`;
         return;
     }
 
-    // Сначала показываем подпапки
-    folder.children.forEach(item => {
-        if (item.type === "folder") {
-            const card = document.createElement("div");
-            card.className = "card folder-card";
-            card.innerHTML = `
-                <div class="card-title">${item.name}</div>
-                <div class="card-type">Папка</div>
-            `;
-            card.onclick = () => showFolderContent(item);
-            cards.appendChild(card);
+    // Подпапки
+    folder.c.forEach(item => {
+        if (item.t === "f") {
+            const card = createCard(item.n, "folder-card", "Папка", () => showFolderContent(item));
+            c.appendChild(card);
         }
     });
 
-    // Затем показываем файлы
-    folder.children.forEach(item => {
-        if (item.type === "file") {
-            const card = document.createElement("div");
-            card.className = "card file-card";
-            card.innerHTML = `<div class="card-title">${item.name}</div>`;
-            card.onclick = () => loadFileContent(item);
-            cards.appendChild(card);
+    // Файлы
+    folder.c.forEach(item => {
+        if (item.t === "d") {
+            const card = createCard(item.n, "file-card", "", () => loadFileContent(item));
+            c.appendChild(card);
         }
     });
 
-    // Добавляем кнопку "Назад" если это не корневая папка
-    if (folderStack.length > 1) {
-        const backCard = document.createElement("div");
-        backCard.className = "card back-card";
-        backCard.innerHTML = `
-            <div class="card-title">← Назад</div>
-        `;
-        backCard.onclick = goBack;
-        cards.appendChild(backCard);
+    // Кнопка назад
+    if (fs.length > 1) {
+        const backCard = createCard("← Назад", "back-card", "", goBack);
+        c.appendChild(backCard);
     }
 
-    // Показываем карточки, скрываем контент
-    cards.style.display = "flex";
-    content.style.display = "none";
+    c.style.display = "flex";
+    ct.style.display = "none";
 }
 
-// === Назад по истории папок ===
+function createCard(title, className, type, onClick) {
+    const card = document.createElement("div");
+    card.className = `card ${className}`;
+    card.innerHTML = type 
+        ? `<div class="card-title">${title}</div><div class="card-type">${type}</div>`
+        : `<div class="card-title">${title}</div>`;
+    card.onclick = onClick;
+    return card;
+}
+
 function goBack() {
-    if (folderStack.length > 1) {
-        folderStack.pop(); // Убираем текущую папку
-        const previousFolder = folderStack[folderStack.length - 1];
-        currentFolder = previousFolder;
-        renderCards(previousFolder);
+    if (fs.length > 1) {
+        fs.pop();
+        cf = fs[fs.length - 1];
+        renderCards(cf);
     }
 }
 
-// === Загрузка содержимого Markdown ===
 function loadFileContent(file) {
-    // Скрываем карточки, показываем контент
-    cards.style.display = "none";
-    content.style.display = "block";
+    c.style.display = "none";
+    ct.style.display = "block";
     
-    if (!file.content) {
-        content.innerHTML = `
-            <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
-            <div class="error-message">
-                <h3>Содержимое недоступно</h3>
-                <p>Для файла "${file.name}" нет содержимого</p>
-            </div>
-        `;
-        return;
+    // Используем кэш если есть
+    let htmlContent;
+    if (renderCache.has(file)) {
+        htmlContent = renderCache.get(file);
+    } else {
+        htmlContent = file.d ? md.render(file.d) : "<p>Содержимое недоступно</p>";
+        renderCache.set(file, htmlContent);
     }
     
-    const htmlContent = md.render(file.content);
-    content.innerHTML = `
-        <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
+    ct.innerHTML = `
+        <button class="back-button" onclick="btc()">← Назад</button>
         <div class="markdown-content">
-            <h1>${file.name}</h1>
+            <h1>${file.n}</h1>
             ${htmlContent}
         </div>
     `;
 }
 
-// === Назад к карточкам ===
 function backToCards() {
-    if (currentFolder) {
-        renderCards(currentFolder);
+    if (cf) {
+        renderCards(cf);
     } else {
-        // Показываем корневую структуру
         showRootContent();
     }
 }
 
-// === Показать корневую структуру ===
 function showRootContent() {
-    cards.style.display = "flex";
-    content.style.display = "none";
-    folderStack = [];
-    currentFolder = null;
+    c.style.display = "flex";
+    ct.style.display = "none";
+    fs = [];
+    cf = null;
     
-    cards.innerHTML = "";
+    c.innerHTML = "";
     
-    // Показываем все папки и файлы из корня
     CONTENT_TREE.forEach(item => {
-        if (item.type === "folder") {
-            const card = document.createElement("div");
-            card.className = "card folder-card";
-            card.innerHTML = `
-                <div class="card-title">${item.name}</div>
-                <div class="card-type">Папка</div>
-            `;
-            card.onclick = () => showFolderContent(item);
-            cards.appendChild(card);
-        } else if (item.type === "file") {
-            const card = document.createElement("div");
-            card.className = "card file-card";
-            card.innerHTML = `<div class="card-title">${item.name}</div>`;
-            card.onclick = () => loadFileContent(item);
-            cards.appendChild(card);
+        if (item.t === "f") {
+            const card = createCard(item.n, "folder-card", "Папка", () => showFolderContent(item));
+            c.appendChild(card);
+        } else if (item.t === "d") {
+            const card = createCard(item.n, "file-card", "", () => loadFileContent(item));
+            c.appendChild(card);
         }
     });
 }
 
 // Инициализация
 renderSidebar();
-showRootContent(); // Показываем корневую структуру при загрузке
+showRootContent();
 
-// Делаем функции глобальными для использования в onclick
-window.backToCards = backToCards;
-window.currentFolder = currentFolder;
+// Глобальные функции
+window.btc = backToCards;
