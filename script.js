@@ -1,145 +1,251 @@
-import { C as CONTENT_TREE } from "./content.js";
+// script.js
+import { CONTENT_TREE } from "./content.js";
 
-const md = window.markdownit({ html: true });
-const s = document.getElementById("sidebar");
-const c = document.getElementById("cards");
-const ct = document.getElementById("content");
+const md = window.markdownit({
+    html: true,
+    breaks: true,
+    linkify: true
+});
 
-let cf = null; // currentFolder
-let fs = []; // folderStack
+const sidebar = document.getElementById("sidebar");
+const cards = document.getElementById("cards");
+const content = document.getElementById("content");
+const hamburger = document.getElementById("hamburger");
+const overlay = document.getElementById("overlay");
 
-// Кэш для отрендеренного markdown
-const renderCache = new Map();
+let currentFolder = null;
+let folderStack = [];
 
-function renderSidebar() {
-    s.innerHTML = "";
-    
-    CONTENT_TREE.forEach(item => {
-        const div = document.createElement("div");
-        if (item.t === "f") { // folder
-            div.className = "folder";
-            div.textContent = item.n;
-            div.onclick = () => showFolderContent(item);
-        } else if (item.t === "d") { // document
-            div.className = "file";
-            div.textContent = item.n;
-            div.onclick = () => loadFileContent(item);
+// === УПРАВЛЕНИЕ МОБИЛЬНЫМ МЕНЮ ===
+function toggleSidebar() {
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+    hamburger.classList.toggle('active');
+}
+
+function closeSidebar() {
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+    hamburger.classList.remove('active');
+}
+
+// === УПРАВЛЕНИЕ ВЫСОТОЙ САЙДБАРА ===
+function setupMobileSidebar() {
+    function setSidebarHeight() {
+        if (window.innerWidth <= 768) {
+            sidebar.style.height = window.innerHeight + 'px';
+        } else {
+            sidebar.style.height = '';
         }
-        s.appendChild(div);
+    }
+    
+    setSidebarHeight();
+    window.addEventListener('resize', setSidebarHeight);
+    
+    hamburger.addEventListener('click', () => {
+        setTimeout(setSidebarHeight, 50);
     });
 }
 
+// === РЕНДЕР САЙДБАРА ===
+function renderSidebar() {
+    sidebar.innerHTML = "";
+    
+    CONTENT_TREE.forEach(item => {
+        if (item.type === "folder") {
+            const div = document.createElement("div");
+            div.className = "folder";
+            div.textContent = item.name;
+            div.onclick = () => {
+                showFolderContent(item);
+                closeSidebar();
+            };
+            sidebar.appendChild(div);
+        } else if (item.type === "file") {
+            const div = document.createElement("div");
+            div.className = "file";
+            div.textContent = item.name;
+            div.onclick = () => {
+                loadFileContent(item);
+                closeSidebar();
+            };
+            sidebar.appendChild(div);
+        }
+    });
+}
+
+// === ПОКАЗАТЬ СОДЕРЖИМОЕ ПАПКИ В КАРТОЧКАХ ===
 function showFolderContent(folder) {
-    cf = folder;
-    fs.push(folder);
+    currentFolder = folder;
+    folderStack.push(folder);
     renderCards(folder);
 }
 
+// === РЕНДЕР КАРТОЧЕК ===
 function renderCards(folder) {
-    c.innerHTML = "";
-    ct.innerHTML = "";
+    cards.innerHTML = "";
+    content.innerHTML = "";
 
-    if (!folder.c || folder.c.length === 0) {
-        c.innerHTML = `<div class="empty-folder"><h3>${folder.n}</h3><p>Папка пуста</p></div>`;
+    if (!folder.children || folder.children.length === 0) {
+        cards.innerHTML = `
+            <div class="empty-folder">
+                <h3>${folder.name}</h3>
+                <p>Папка пуста</p>
+            </div>
+        `;
         return;
     }
 
-    // Подпапки
-    folder.c.forEach(item => {
-        if (item.t === "f") {
-            const card = createCard(item.n, "folder-card", "Папка", () => showFolderContent(item));
-            c.appendChild(card);
+    // Сначала показываем подпапки
+    folder.children.forEach(item => {
+        if (item.type === "folder") {
+            const card = document.createElement("div");
+            card.className = "card folder-card";
+            card.innerHTML = `
+                <div class="card-title">${item.name}</div>
+                <div class="card-type">Папка</div>
+            `;
+            card.onclick = () => showFolderContent(item);
+            cards.appendChild(card);
         }
     });
 
-    // Файлы
-    folder.c.forEach(item => {
-        if (item.t === "d") {
-            const card = createCard(item.n, "file-card", "", () => loadFileContent(item));
-            c.appendChild(card);
+    // Затем показываем файлы
+    folder.children.forEach(item => {
+        if (item.type === "file") {
+            const card = document.createElement("div");
+            card.className = "card file-card";
+            card.innerHTML = `<div class="card-title">${item.name}</div>`;
+            card.onclick = () => loadFileContent(item);
+            cards.appendChild(card);
         }
     });
 
-    // Кнопка назад
-    if (fs.length > 1) {
-        const backCard = createCard("← Назад", "back-card", "", goBack);
-        c.appendChild(backCard);
+    // Добавляем кнопку "Назад" если это не корневая папка
+    if (folderStack.length > 1) {
+        const backCard = document.createElement("div");
+        backCard.className = "card back-card";
+        backCard.innerHTML = `
+            <div class="card-title">← Назад</div>
+        `;
+        backCard.onclick = goBack;
+        cards.appendChild(backCard);
     }
 
-    c.style.display = "flex";
-    ct.style.display = "none";
+    // Показываем карточки, скрываем контент
+    cards.style.display = "flex";
+    content.style.display = "none";
 }
 
-function createCard(title, className, type, onClick) {
-    const card = document.createElement("div");
-    card.className = `card ${className}`;
-    card.innerHTML = type 
-        ? `<div class="card-title">${title}</div><div class="card-type">${type}</div>`
-        : `<div class="card-title">${title}</div>`;
-    card.onclick = onClick;
-    return card;
-}
-
+// === НАЗАД ПО ИСТОРИИ ПАПОК ===
 function goBack() {
-    if (fs.length > 1) {
-        fs.pop();
-        cf = fs[fs.length - 1];
-        renderCards(cf);
+    if (folderStack.length > 1) {
+        folderStack.pop();
+        const previousFolder = folderStack[folderStack.length - 1];
+        currentFolder = previousFolder;
+        renderCards(previousFolder);
     }
 }
 
-function loadFileContent(file) {
-    c.style.display = "none";
-    ct.style.display = "block";
-    
-    // Используем кэш если есть
-    let htmlContent;
-    if (renderCache.has(file)) {
-        htmlContent = renderCache.get(file);
-    } else {
-        htmlContent = file.d ? md.render(file.d) : "<p>Содержимое недоступно</p>";
-        renderCache.set(file, htmlContent);
+// === ЗАГРУЗКА СОДЕРЖИМОГО MARKDOWN ===
+async function loadFileContent(file) {
+    try {
+        cards.style.display = "none";
+        content.style.display = "block";
+        content.innerHTML = "<div class='loading'>Загрузка содержимого...</div>";
+        
+        const response = await fetch(file.path);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const text = await response.text();
+        const htmlContent = md.render(text);
+        
+        content.innerHTML = `
+            <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
+            <div class="markdown-content">
+                <h1>${file.name}</h1>
+                ${htmlContent}
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('Ошибка загрузки файла:', error);
+        content.innerHTML = `
+            <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
+            <div class="error-message">
+                <h3>Ошибка загрузки</h3>
+                <p>Не удалось загрузить: ${file.name}</p>
+                <p>Ошибка: ${error.message}</p>
+            </div>
+        `;
     }
-    
-    ct.innerHTML = `
-        <button class="back-button" onclick="btc()">← Назад</button>
-        <div class="markdown-content">
-            <h1>${file.n}</h1>
-            ${htmlContent}
-        </div>
-    `;
 }
 
+// === НАЗАД К КАРТОЧКАМ ===
 function backToCards() {
-    if (cf) {
-        renderCards(cf);
+    if (currentFolder) {
+        renderCards(currentFolder);
     } else {
         showRootContent();
     }
 }
 
+// === ПОКАЗАТЬ КОРНЕВУЮ СТРУКТУРУ ===
 function showRootContent() {
-    c.style.display = "flex";
-    ct.style.display = "none";
-    fs = [];
-    cf = null;
+    cards.style.display = "flex";
+    content.style.display = "none";
+    folderStack = [];
+    currentFolder = null;
     
-    c.innerHTML = "";
+    cards.innerHTML = '<div class="welcome-message"><h1>Starfinder Справочник</h1><p>Выберите категорию для просмотра содержимого</p></div>';
     
     CONTENT_TREE.forEach(item => {
-        if (item.t === "f") {
-            const card = createCard(item.n, "folder-card", "Папка", () => showFolderContent(item));
-            c.appendChild(card);
-        } else if (item.t === "d") {
-            const card = createCard(item.n, "file-card", "", () => loadFileContent(item));
-            c.appendChild(card);
+        if (item.type === "folder") {
+            const card = document.createElement("div");
+            card.className = "card folder-card";
+            card.innerHTML = `
+                <div class="card-title">${item.name}</div>
+                <div class="card-type">Папка</div>
+            `;
+            card.onclick = () => showFolderContent(item);
+            cards.appendChild(card);
+        } else if (item.type === "file") {
+            const card = document.createElement("div");
+            card.className = "card file-card";
+            card.innerHTML = `<div class="card-title">${item.name}</div>`;
+            card.onclick = () => loadFileContent(item);
+            cards.appendChild(card);
         }
     });
 }
 
-// Инициализация
-renderSidebar();
-showRootContent();
+// === ИНИЦИАЛИЗАЦИЯ ===
+function init() {
+    renderSidebar();
+    showRootContent();
+    setupMobileSidebar();
+    
+    // Обработчики для мобильного меню
+    hamburger.addEventListener('click', toggleSidebar);
+    overlay.addEventListener('click', closeSidebar);
+    
+    // Закрытие меню при нажатии Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeSidebar();
+        }
+    });
+}
 
-// Глобальные функции
-window.btc = backToCards;
+// Делаем функции глобальными для использования в onclick
+window.backToCards = backToCards;
+
+// Запускаем инициализацию когда DOM готов
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
