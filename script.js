@@ -7,6 +7,7 @@ const cards = document.getElementById("cards");
 const content = document.getElementById("content");
 
 let currentFolder = null;
+let folderStack = []; // Стек для навигации по папкам
 
 // === САЙДБАР ===
 function renderSidebar() {
@@ -17,7 +18,7 @@ function renderSidebar() {
             const div = document.createElement("div");
             div.className = "folder";
             div.textContent = item.name;
-            div.onclick = () => showCards(item);
+            div.onclick = () => showFolderContent(item);
             sidebar.appendChild(div);
         } else if (item.type === "file") {
             const div = document.createElement("div");
@@ -29,41 +30,80 @@ function renderSidebar() {
     });
 }
 
-// === Карточки внутри папки ===
-function showCards(folder) {
+// === Показать содержимое папки в карточках ===
+function showFolderContent(folder) {
     currentFolder = folder;
+    folderStack.push(folder);
+    renderCards(folder);
+}
+
+// === Рендер карточек ===
+function renderCards(folder) {
     cards.innerHTML = "";
     content.innerHTML = "";
 
-    // Рекурсивно собираем все файлы из папки и подпапок
-    function collectFiles(item) {
-        if (item.type === "file") {
-            return [item];
-        } else if (item.type === "folder" && item.children) {
-            return item.children.flatMap(child => collectFiles(child));
-        }
-        return [];
+    if (!folder.children || folder.children.length === 0) {
+        cards.innerHTML = `
+            <div class="empty-folder">
+                <h3>${folder.name}</h3>
+                <p>Папка пуста</p>
+            </div>
+        `;
+        return;
     }
 
-    const allFiles = collectFiles(folder);
-
-    allFiles.forEach(file => {
-        const card = document.createElement("div");
-        card.className = "card";
-        
-        // Только название файла, без превью текста
-        card.innerHTML = `<div class="card-title">${file.name}</div>`;
-        
-        card.onclick = () => loadFileContent(file);
-        cards.appendChild(card);
+    // Сначала показываем подпапки
+    folder.children.forEach(item => {
+        if (item.type === "folder") {
+            const card = document.createElement("div");
+            card.className = "card folder-card";
+            card.innerHTML = `
+                <div class="card-title">${item.name}</div>
+                <div class="card-type">Папка</div>
+            `;
+            card.onclick = () => showFolderContent(item);
+            cards.appendChild(card);
+        }
     });
+
+    // Затем показываем файлы
+    folder.children.forEach(item => {
+        if (item.type === "file") {
+            const card = document.createElement("div");
+            card.className = "card file-card";
+            card.innerHTML = `<div class="card-title">${item.name}</div>`;
+            card.onclick = () => loadFileContent(item);
+            cards.appendChild(card);
+        }
+    });
+
+    // Добавляем кнопку "Назад" если это не корневая папка
+    if (folderStack.length > 1) {
+        const backCard = document.createElement("div");
+        backCard.className = "card back-card";
+        backCard.innerHTML = `
+            <div class="card-title">← Назад</div>
+        `;
+        backCard.onclick = goBack;
+        cards.appendChild(backCard);
+    }
 
     // Показываем карточки, скрываем контент
     cards.style.display = "flex";
     content.style.display = "none";
 }
 
-// === Загрузка содержимого Markdown (из встроенных данных) ===
+// === Назад по истории папок ===
+function goBack() {
+    if (folderStack.length > 1) {
+        folderStack.pop(); // Убираем текущую папку
+        const previousFolder = folderStack[folderStack.length - 1];
+        currentFolder = previousFolder;
+        renderCards(previousFolder);
+    }
+}
+
+// === Загрузка содержимого Markdown ===
 function loadFileContent(file) {
     // Скрываем карточки, показываем контент
     cards.style.display = "none";
@@ -93,22 +133,46 @@ function loadFileContent(file) {
 // === Назад к карточкам ===
 function backToCards() {
     if (currentFolder) {
-        showCards(currentFolder);
+        renderCards(currentFolder);
     } else {
-        // Если нет текущей папки, показываем приветствие
-        cards.style.display = "flex";
-        content.style.display = "none";
-        cards.innerHTML = `
-            <div class="welcome-message">
-                <h1>Starfinder Справочник</h1>
-                <p>Выберите категорию в сайдбаре для просмотра содержимого</p>
-            </div>
-        `;
+        // Показываем корневую структуру
+        showRootContent();
     }
+}
+
+// === Показать корневую структуру ===
+function showRootContent() {
+    cards.style.display = "flex";
+    content.style.display = "none";
+    folderStack = [];
+    currentFolder = null;
+    
+    cards.innerHTML = "";
+    
+    // Показываем все папки и файлы из корня
+    CONTENT_TREE.forEach(item => {
+        if (item.type === "folder") {
+            const card = document.createElement("div");
+            card.className = "card folder-card";
+            card.innerHTML = `
+                <div class="card-title">${item.name}</div>
+                <div class="card-type">Папка</div>
+            `;
+            card.onclick = () => showFolderContent(item);
+            cards.appendChild(card);
+        } else if (item.type === "file") {
+            const card = document.createElement("div");
+            card.className = "card file-card";
+            card.innerHTML = `<div class="card-title">${item.name}</div>`;
+            card.onclick = () => loadFileContent(item);
+            cards.appendChild(card);
+        }
+    });
 }
 
 // Инициализация
 renderSidebar();
+showRootContent(); // Показываем корневую структуру при загрузке
 
 // Делаем функции глобальными для использования в onclick
 window.backToCards = backToCards;
