@@ -152,7 +152,7 @@ async function loadFileContent(file) {
     try {
         cards.style.display = "none";
         content.style.display = "block";
-        content.innerHTML = "<div class='loading'>Загрузка содержимого...</div>";
+        content.innerHTML = "<div class='loading'>Загрузка...</div>";
         
         const response = await fetch(file.path);
         
@@ -167,7 +167,7 @@ async function loadFileContent(file) {
             <div class="markdown-content">
                 <h1>${file.name}</h1>
                 ${htmlContent}
-                <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
+                <button class="back-button" onclick="backToCards()">← Назад</button>
             </div>
         `;
         
@@ -178,7 +178,7 @@ async function loadFileContent(file) {
                 <h3>Ошибка загрузки</h3>
                 <p>Не удалось загрузить: ${file.name}</p>
                 <p>Ошибка: ${error.message}</p>
-                <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
+                <button class="back-button" onclick="backToCards()">← Назад</button>
             </div>
         `;
     }
@@ -200,7 +200,7 @@ function showRootContent() {
     folderStack = [];
     currentFolder = null;
     
-    cards.innerHTML = '<div class="welcome-message"><h1>Starfinder Справочник</h1><p>Выберите категорию для просмотра содержимого</p></div>';
+    cards.innerHTML = '<div class="welcome-message"><h1>StarSu | Справочник по Starfindr</h1><p>Специально для бриключения в Барреле</p><p>Космические ебать приключения</p></div>';
     
     CONTENT_TREE.forEach(item => {
         if (item.type === "folder") {
