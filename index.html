@@ -1,26 +1,18 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Starfinder — Справочник</title>
-  <link rel="stylesheet" href="style.css">
-
-  <!-- markdown-it -->
-  <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
+<meta charset="UTF-8" />
+<title>Starfinder Справочник</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
 </head>
-
 <body>
 
-  <div id="app">
-    <aside id="sidebar"></aside>
-    <main id="content">Выберите раздел в меню</main>
-  </div>
+<div id="sidebar"></div>
+<div id="cards"></div>
+<div id="content"></div>
 
-  <!-- сайтмэп, сгенерированный build.js -->
-  <script src="siteMap.js"></script>
-
-  <!-- основной скрипт -->
-  <script src="app.js"></script>
+<script type="module" src="script.js"></script>
 
 </body>
 </html>

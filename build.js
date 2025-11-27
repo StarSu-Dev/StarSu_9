@@ -1,31 +1,39 @@
-const fs = require("fs");
-const path = require("path");
+// build.js
+const fs = require('fs');
+const path = require('path');
 
 const DATA_DIR = path.join(__dirname, "Data");
-const OUTPUT = path.join(__dirname, "siteMap.js");
+const OUTPUT = path.join(__dirname, "tree.js");
 
-function buildSiteMap() {
-  let result = {};
+function scanDir(dir) {
+    const items = fs.readdirSync(dir, { withFileTypes: true });
+    return items.map(entry => {
+        const full = path.join(dir, entry.name);
 
-  const dirs = fs.readdirSync(DATA_DIR, { withFileTypes: true })
-    .filter(d => d.isDirectory())
-    .map(d => d.name);
+        if (entry.isDirectory()) {
+            return {
+                type: "folder",
+                name: entry.name,
+                children: scanDir(full)
+            };
+        }
 
-  dirs.forEach(dir => {
-    const folderPath = path.join(DATA_DIR, dir);
+        if (entry.isFile() && entry.name.endsWith(".md")) {
+            return {
+                type: "file",
+                name: entry.name.replace(".md", ""),
+                path: full.replace(__dirname, "")
+            };
+        }
 
-    const files = fs.readdirSync(folderPath)
-      .filter(f => f.endsWith(".md"))
-      .map(f => f.replace(/\.md$/, ""));
-
-    result[dir] = files;
-  });
-
-  const js = "window.SITE_MAP = " + JSON.stringify(result, null, 2) + ";";
-
-  fs.writeFileSync(OUTPUT, js, "utf8");
-
-  console.log("siteMap.js успешно создан!");
+        return null;
+    }).filter(Boolean);
 }
 
-buildSiteMap();
+const tree = scanDir(DATA_DIR);
+
+const output = `export const CONTENT_TREE = ${JSON.stringify(tree, null, 2)};`;
+
+fs.writeFileSync(OUTPUT, output, "utf8");
+
+console.log("✔ tree.js создан");
