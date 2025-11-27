@@ -200,7 +200,7 @@ function showRootContent() {
     folderStack = [];
     currentFolder = null;
     
-    cards.innerHTML = '<div class="welcome-message"><h1>StarSu | Справочник по Starfindr</h1><p>Специально для бриключения в Барреле</p><p>Космические ебать приключения</p></div>';
+    cards.innerHTML = '<div class="welcome-message"><h1>StarSu | Справочник по Starfindr</h1><p>Разработано специально для ваншота в Барреле 60/5</p><p>Космические ебать приключения</p></div>';
     
     CONTENT_TREE.forEach(item => {
         if (item.type === "folder") {
