@@ -11,19 +11,18 @@ function scanDir(dir) {
 
         if (entry.isDirectory()) {
             return {
-                type: "folder",
-                name: entry.name,
-                children: scanDir(full)
+                t: "f", // type: folder (укороченные ключи)
+                n: entry.name, // name
+                c: scanDir(full) // children
             };
         }
 
         if (entry.isFile() && entry.name.endsWith(".md")) {
-            // Читаем содержимое файла и встраиваем его
             const content = fs.readFileSync(full, 'utf8');
             return {
-                type: "file",
-                name: entry.name.replace(".md", ""),
-                content: content
+                t: "d", // type: document
+                n: entry.name.replace(".md", ""), // name
+                d: content // data (content)
             };
         }
 
@@ -33,9 +32,9 @@ function scanDir(dir) {
 
 const tree = scanDir(DATA_DIR);
 
-const output = `// Автоматически сгенерированный файл с содержимым Markdown
-export const CONTENT_TREE = ${JSON.stringify(tree, null, 2)};`;
+// Минифицированный вывод
+const output = `export const C=${JSON.stringify(tree)};`;
 
 fs.writeFileSync(OUTPUT, output, "utf8");
 
-console.log("✔ content.js создан с встроенным содержимым файлов");
+console.log("✔ content.js создан (минифицированный)");
