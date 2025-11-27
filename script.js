@@ -8,6 +8,15 @@ const content = document.getElementById("content");
 
 let currentFolder = null;
 
+// Функция для исправления путей на GitHub Pages
+function fixPathForGitHub(path) {
+    // Убираем начальный слеш если есть
+    let fixedPath = path.replace(/^\//, '');
+    // Кодируем только кириллические символы
+    fixedPath = fixedPath.replace(/[^A-Za-z0-9/._-]/g, encodeURIComponent);
+    return fixedPath;
+}
+
 // === САЙДБАР ===
 function renderSidebar() {
     sidebar.innerHTML = "";
@@ -35,7 +44,6 @@ function showCards(folder) {
     cards.innerHTML = "";
     content.innerHTML = "";
 
-    // Рекурсивно собираем все файлы из папки и подпапок
     function collectFiles(item) {
         if (item.type === "file") {
             return [item];
@@ -60,51 +68,25 @@ function showCards(folder) {
         cards.appendChild(card);
     });
 
-    // Показываем карточки, скрываем контент
     cards.style.display = "flex";
     content.style.display = "none";
 }
 
-// === Загрузка Markdown (карточки исчезают) ===
+// === Загрузка Markdown ===
 async function loadFile(filePath) {
     try {
-        // Скрываем карточки, показываем контент
         cards.style.display = "none";
         content.style.display = "block";
-        
-        // Показываем загрузку
         content.innerHTML = "<div class='loading'>Загрузка...</div>";
         
-        // Пробуем разные варианты путей для GitHub Pages
-        const pathsToTry = [
-            filePath,
-            `./${filePath}`,
-            filePath.replace(/^Data\//, ''),
-            encodeURI(filePath),
-            encodeURI(`./${filePath}`)
-        ];
-
-        let response;
-        let successfulPath = '';
-
-        for (const path of pathsToTry) {
-            try {
-                response = await fetch(path);
-                if (response.ok) {
-                    successfulPath = path;
-                    break;
-                }
-            } catch (e) {
-                console.log(`Путь не сработал: ${path}`, e);
-                continue;
-            }
-        }
-
-        if (!response || !response.ok) {
-            throw new Error(`Не удалось загрузить файл по любому из путей`);
-        }
+        // Исправляем путь для GitHub Pages
+        const correctedPath = fixPathForGitHub(filePath);
+        console.log('Пробуем загрузить:', correctedPath);
         
-        const text = await response.text();
+        const res = await fetch(correctedPath);
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        
+        const text = await res.text();
         content.innerHTML = `
             <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
             <div class="markdown-content">${md.render(text)}</div>
@@ -115,15 +97,9 @@ async function loadFile(filePath) {
         content.innerHTML = `
             <button class="back-button" onclick="backToCards()">← Назад к карточкам</button>
             <div class="error-message">
-                <h3>Ошибка загрузки</h3>
-                <p>Файл не найден: ${filePath}</p>
-                <p>Проверьте:</p>
-                <ul>
-                    <li>Файл существует в репозитории</li>
-                    <li>Путь к файлу правильный</li>
-                    <li>Файл имеет расширение .md</li>
-                </ul>
-                <p>Ошибка: ${error.message}</p>
+                <h3>Файл не найден</h3>
+                <p>Путь: ${filePath}</p>
+                <p>Убедитесь, что файл существует в репозитории GitHub</p>
             </div>
         `;
     }
@@ -134,7 +110,6 @@ function backToCards() {
     if (currentFolder) {
         showCards(currentFolder);
     } else {
-        // Если нет текущей папки, показываем приветствие
         cards.style.display = "flex";
         content.style.display = "none";
         cards.innerHTML = `
@@ -148,7 +123,5 @@ function backToCards() {
 
 // Инициализация
 renderSidebar();
-
-// Делаем функции глобальными для использования в onclick
 window.backToCards = backToCards;
 window.currentFolder = currentFolder;
