@@ -51,15 +51,8 @@ function showCards(folder) {
         const card = document.createElement("div");
         card.className = "card";
         
-        // Создаем превью из первых 100 символов содержимого
-        const preview = file.content 
-            ? file.content.substring(0, 100).replace(/[#*`]/g, '') + '...'
-            : 'Нажмите для просмотра';
-        
-        card.innerHTML = `
-            <div class="card-title">${file.name}</div>
-            <div class="card-preview">${preview}</div>
-        `;
+        // Только название файла, без превью текста
+        card.innerHTML = `<div class="card-title">${file.name}</div>`;
         
         card.onclick = () => loadFileContent(file);
         cards.appendChild(card);
