@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "markdown-it": "^14.1.0"
+  }
+}
+  
+{
+  "name": "markdown-spa",
+  "version": "1.0.0",
+  "description": "Простое SPA для отображения Markdown файлов",
+  "main": "index.html",
+  "scripts": {
+    "dev": "live-server --port=3000",
+    "build": "echo 'Build complete'"
+  },
+  "dependencies": {
+    "markdown-it": "^13.0.1"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "keywords": ["markdown", "spa", "sidebar", "navigation"],
+  "author": "Your Name",
+  "license": "MIT"
+}
