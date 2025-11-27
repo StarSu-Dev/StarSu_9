@@ -11,18 +11,19 @@ function scanDir(dir) {
 
         if (entry.isDirectory()) {
             return {
-                t: "f", // type: folder (укороченные ключи)
-                n: entry.name, // name
-                c: scanDir(full) // children
+                type: "folder",
+                name: entry.name,
+                children: scanDir(full)
             };
         }
 
         if (entry.isFile() && entry.name.endsWith(".md")) {
-            const content = fs.readFileSync(full, 'utf8');
+            // Сохраняем только путь к файлу, не содержимое
+            const relativePath = path.relative(__dirname, full).replace(/\\/g, "/");
             return {
-                t: "d", // type: document
-                n: entry.name.replace(".md", ""), // name
-                d: content // data (content)
+                type: "file",
+                name: entry.name.replace(".md", ""),
+                path: relativePath
             };
         }
 
@@ -30,11 +31,30 @@ function scanDir(dir) {
     }).filter(Boolean);
 }
 
+console.log("🔍 Сканирую структуру папок...");
 const tree = scanDir(DATA_DIR);
 
-// Минифицированный вывод
-const output = `export const C=${JSON.stringify(tree)};`;
+const output = `// Структура папок и файлов
+export const CONTENT_TREE = ${JSON.stringify(tree, null, 2)};`;
 
 fs.writeFileSync(OUTPUT, output, "utf8");
 
-console.log("✔ content.js создан (минифицированный)");
+// Статистика
+let folderCount = 0;
+let fileCount = 0;
+
+function countItems(items) {
+    items.forEach(item => {
+        if (item.type === "folder") {
+            folderCount++;
+            if (item.children) countItems(item.children);
+        } else if (item.type === "file") {
+            fileCount++;
+        }
+    });
+}
+countItems(tree);
+
+console.log(`✅ content.js создан!`);
+console.log(`📊 Статистика: ${folderCount} папок, ${fileCount} файлов`);
+console.log(`📦 Размер файла: ${(Buffer.byteLength(output, 'utf8') / 1024 / 1024).toFixed(2)} MB`);
