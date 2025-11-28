@@ -17,6 +17,7 @@ body {
     background: #0d1117;
     color: #fff;
     position: relative;
+    
 }
 
 /* Кнопка гамбургера */
@@ -316,7 +317,7 @@ body {
 }
 
 .markdown-content table {
-    width: 100%;
+    width: auto;
     border-collapse: collapse;
     margin: 1em 0;
     background: #161b22;
